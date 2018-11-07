@@ -17,11 +17,9 @@ router.get('/test', (req, res) => res.json({
 // @route GET api/users/register
 // @desc Register a user
 router.post('register', (req, res) => {
-  User.findOne({
-    email: req.body.email
-  }).then(user => {
+  User.findOne({ email: req.body.email }).then(user => {
     if (user) {
-      errors.email = 'Email already in use';
+      errors.email = 'Email already exists';
       return res.status(400).json(errors);
     } else {
       const avatar = gravatar.url(req.body.email, {
@@ -50,4 +48,33 @@ router.post('register', (req, res) => {
     }
   });
 });
+
+// @route GET api/users/login
+// @desc Login user / returning JWT
+// @access Public
+
+router.post('/login', (req,res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  //find user by email
+  User.findOne({email})
+    .then(user => {
+      //Check for user
+      if(!user){
+        return res.status(404).json({email: 'Email or password is incorrect'});
+      }
+
+      //check password
+      bcrypt.compare(password, user.password)
+        .then(isMatch => {
+          if(isMatch){
+            res.json({msg: 'Success'})
+          } else {
+            return res.status(400).json({password: 'Email or password is incorrect'});
+          }
+        })
+    })
+})
+
 module.exports = router;
