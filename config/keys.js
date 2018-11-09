@@ -1,3 +1,4 @@
 module.exports = {
-    mongoURI: 'yourdb'
+    mongoURI: 'YourMongoDbHere',
+    secrerOrKey: 'YourSecretHere'
 };

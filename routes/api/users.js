@@ -1,8 +1,12 @@
 const express = require('express');
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
 const router = express.Router();
 
+
+//load config
+const keys = require('../../config/keys')
 
 //load user model
 const User = require('../../models/User')
@@ -17,7 +21,9 @@ router.get('/test', (req, res) => res.json({
 // @route GET api/users/register
 // @desc Register a user
 router.post('register', (req, res) => {
-  User.findOne({ email: req.body.email }).then(user => {
+  User.findOne({
+    email: req.body.email
+  }).then(user => {
     if (user) {
       errors.email = 'Email already exists';
       return res.status(400).json(errors);
@@ -53,25 +59,51 @@ router.post('register', (req, res) => {
 // @desc Login user / returning JWT
 // @access Public
 
-router.post('/login', (req,res) => {
+router.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
   //find user by email
-  User.findOne({email})
+  User.findOne({
+      email
+    })
     .then(user => {
       //Check for user
-      if(!user){
-        return res.status(404).json({email: 'Email or password is incorrect'});
+      if (!user) {
+        return res.status(404).json({
+          email: 'Email or password is incorrect'
+        });
       }
 
       //check password
       bcrypt.compare(password, user.password)
         .then(isMatch => {
-          if(isMatch){
-            res.json({msg: 'Success'})
+          if (isMatch) {
+            // User matched
+
+            //create jwt payload
+            const payload = {
+              id: user.id,
+              name: user.name,
+              avatar: user.avatar
+            }
+
+            // Sign the token
+            // Set token to expire in 1 hour
+            jwt.sign(
+              payload,
+              keys.secrerOrKey,
+              {expiresIn: 3600},
+              (err, token) => {
+                res.json({
+                  success: true,
+                  token: 'Bearer ' + token
+                })
+            });
           } else {
-            return res.status(400).json({password: 'Email or password is incorrect'});
+            return res.status(400).json({
+              password: 'Email or password is incorrect'
+            });
           }
         })
     })
